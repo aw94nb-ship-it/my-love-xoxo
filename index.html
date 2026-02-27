@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Be my forever BFF 💖</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffd6e0 0%, #e8d5f5 50%, #c9e8ff 100%);
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+  }
+
+  /* Floating background hearts */
+  #bgHearts {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .bg-heart {
+    position: absolute;
+    bottom: -2rem;
+    font-size: 1.5rem;
+    animation: floatUp linear infinite;
+    opacity: 0;
+    user-select: none;
+  }
+
+  @keyframes floatUp {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.7; }
+    90%  { opacity: 0.5; }
+    100% { transform: translateY(-110vh) rotate(30deg); opacity: 0; }
+  }
+
+  /* BFF Button */
+  #bffBtn {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    padding: 1rem 2.2rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #ff7eb3, #ff4d8d);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(255, 77, 141, 0.45);
+    transition: left 0.25s cubic-bezier(.22,.61,.36,1),
+                top  0.25s cubic-bezier(.22,.61,.36,1),
+                background 0.4s, box-shadow 0.4s, transform 0.25s;
+    white-space: nowrap;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  #bffBtn:hover { filter: brightness(1.08); }
+
+  #bffBtn.ready {
+    animation: none;
+    background: linear-gradient(135deg, #56d98f, #2ec97e);
+    box-shadow: 0 6px 24px rgba(46, 201, 126, 0.45);
+    transform: scale(1.05);
+    cursor: pointer;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 6px 24px rgba(255, 77, 141, 0.45); transform: translate(-50%,-50%) scale(1); }
+    50%       { box-shadow: 0 6px 32px rgba(255, 77, 141, 0.7);  transform: translate(-50%,-50%) scale(1.06); }
+  }
+
+  /* Fireworks canvas */
+  #fireworks {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  /* Modal */
+  #modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(180, 120, 200, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+  }
+
+  #modal.visible {
+    display: flex;
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .modal-box {
+    background: linear-gradient(145deg, #fff0f6, #f3e8ff, #e8f4ff);
+    border-radius: 24px;
+    padding: 2.4rem 2.8rem;
+    max-width: 440px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(160, 80, 180, 0.3);
+    animation: popIn 0.45s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  @keyframes popIn {
+    0%   { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+
+  .modal-box h2 {
+    font-size: 1.6rem;
+    color: #c74b8a;
+    margin-bottom: 1rem;
+  }
+
+  .modal-box p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #5a3a6e;
+    margin-bottom: 0.5rem;
+  }
+
+  #closeBtn {
+    margin-top: 1.6rem;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #ff7eb3, #c94bea);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(200, 80, 200, 0.4);
+    transition: filter 0.2s, transform 0.2s;
+  }
+
+  #closeBtn:hover { filter: brightness(1.1); transform: scale(1.04); }
+</style>
+</head>
+<body>
+
+<div id="bgHearts"></div>
+
+<button id="bffBtn">💕 Be my forever BFF? 💕</button>
+
+<canvas id="fireworks"></canvas>
+
+<div id="modal">
+  <div class="modal-box">
+    <h2>💖 YAY! You caught me! 💖</h2>
+    <p>Okay fine, you win — BFF status: OFFICIALLY LOCKED IN. 🎉</p>
+    <p>No take-backs, no returns, no refunds.</p>
+    <p>You're stuck with me forever and I couldn't be happier about it. 😜✨</p>
+    <p><br>Thanks for being the best human ever. 🌟</p>
+    <button id="closeBtn">Forever &amp; always 💌</button>
+  </div>
+</div>
+
+<script>
+  /* ── Floating background hearts ── */
+  const bgContainer = document.getElementById('bgHearts');
+  const emojis = ['💕', '💖', '✨', '💗', '🌸', '💫'];
+
+  function spawnHeart() {
+    const el = document.createElement('span');
+    el.className = 'bg-heart';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    el.style.left = Math.random() * 100 + 'vw';
+    const dur = 7 + Math.random() * 8;
+    el.style.animationDuration = dur + 's';
+    el.style.animationDelay = (Math.random() * 3) + 's';
+    el.style.fontSize = (1 + Math.random() * 1.2) + 'rem';
+    bgContainer.appendChild(el);
+    setTimeout(() => el.remove(), (dur + 3) * 1000);
+  }
+
+  // Seed initial hearts, then keep spawning
+  for (let i = 0; i < 12; i++) setTimeout(spawnHeart, i * 400);
+  setInterval(spawnHeart, 900);
+
+
+  /* ── Button dodge logic ── */
+  const btn = document.getElementById('bffBtn');
+  let dodgeCount = 0;
+  let isDodging = true;
+  let lastDodge = 0;
+  let firstDodge = true;
+
+  function dodge() {
+    if (!isDodging) return;
+    const now = Date.now();
+    if (now - lastDodge < 300) return;
+    lastDodge = now;
+
+    dodgeCount++;
+
+    const pad = 80; // px away from edges
+    const btnW = btn.offsetWidth;
+    const btnH = btn.offsetHeight;
+    const maxX = window.innerWidth  - btnW - pad;
+    const maxY = window.innerHeight - btnH - pad;
+    const newX = pad + Math.random() * maxX;
+    const newY = pad + Math.random() * maxY;
+
+    if (firstDodge) {
+      // Remove the centering transform so left/top are absolute
+      btn.style.transform = 'none';
+      firstDodge = false;
+    }
+
+    btn.style.left = newX + 'px';
+    btn.style.top  = newY + 'px';
+
+    if (dodgeCount >= 5) {
+      isDodging = false;
+      btn.classList.add('ready');
+      btn.textContent = '💖 Click me! 💖';
+    }
+  }
+
+  btn.addEventListener('mouseover', dodge);
+
+  // Touch support: trigger dodge on touchstart
+  btn.addEventListener('touchstart', (e) => {
+    if (isDodging) {
+      e.preventDefault();
+      dodge();
+    }
+  }, { passive: false });
+
+
+  /* ── Fireworks ── */
+  const canvas   = document.getElementById('fireworks');
+  const ctx      = canvas.getContext('2d');
+  const modal    = document.getElementById('modal');
+  const closeBtn = document.getElementById('closeBtn');
+
+  let particles  = [];
+  let animId     = null;
+
+  function resizeCanvas() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  const PASTEL_COLORS = [
+    '#ff9ec4','#ffb347','#fffb6e','#a8edea',
+    '#c3a9ff','#ff8fab','#f9c74f','#90e0ef',
+    '#b5ead7','#ffdac1','#e2b4bd','#d4a5ff'
+  ];
+
+  function randomPastel() {
+    return PASTEL_COLORS[Math.floor(Math.random() * PASTEL_COLORS.length)];
+  }
+
+  function spawnBurst(x, y) {
+    const count = 60 + Math.floor(Math.random() * 20);
+    for (let i = 0; i < count; i++) {
+      const angle  = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+      const speed  = 2 + Math.random() * 6;
+      const isEmoji = Math.random() < 0.2;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        color: randomPastel(),
+        radius: isEmoji ? 0 : (2 + Math.random() * 3),
+        emoji: isEmoji ? '💗' : null,
+        size:  isEmoji ? (14 + Math.random() * 10) : 0,
+      });
+    }
+  }
+
+  function animateFireworks() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles = particles.filter(p => p.alpha > 0.02);
+
+    for (const p of particles) {
+      p.x   += p.vx;
+      p.y   += p.vy;
+      p.vy  += 0.07;       // gravity
+      p.vx  *= 0.98;       // air resistance
+      p.alpha -= 0.012;
+
+      ctx.globalAlpha = Math.max(0, p.alpha);
+
+      if (p.emoji) {
+        ctx.font = p.size + 'px serif';
+        ctx.fillText(p.emoji, p.x, p.y);
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      }
+    }
+
+    ctx.globalAlpha = 1;
+    animId = requestAnimationFrame(animateFireworks);
+  }
+
+  function startFireworks() {
+    btn.style.display = 'none';
+    canvas.style.display = 'block';
+    animateFireworks();
+
+    const burstInterval = setInterval(() => {
+      const x = canvas.width  * (0.1 + Math.random() * 0.8);
+      const y = canvas.height * (0.05 + Math.random() * 0.55); // upper 60%
+      spawnBurst(x, y);
+    }, 300);
+
+    // Stop new bursts after 3 s, then fade remaining particles
+    setTimeout(() => {
+      clearInterval(burstInterval);
+      // After 1.2 s more, show modal
+      setTimeout(() => {
+        cancelAnimationFrame(animId);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = 'none';
+        modal.classList.add('visible');
+      }, 1200);
+    }, 3000);
+  }
+
+  btn.addEventListener('click', () => {
+    if (!btn.classList.contains('ready')) return;
+    startFireworks();
+  });
+
+  closeBtn.addEventListener('click', () => {
+    modal.classList.remove('visible');
+  });
+</script>
+</body>
+</html>

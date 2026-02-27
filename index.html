@@ -283,6 +283,8 @@
     setInterval(spawnHeart, 900);
   }
 
+  nameInput.focus();
+
   nameSubmitBtn.addEventListener('click', submitName);
   nameInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') submitName();

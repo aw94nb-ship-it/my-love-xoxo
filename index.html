@@ -154,11 +154,75 @@
   }
 
   #closeBtn:hover { filter: brightness(1.1); transform: scale(1.04); }
+
+  /* Name prompt overlay */
+  #namePrompt {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(180, 120, 200, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.4s ease;
+  }
+
+  #namePrompt .modal-box {
+    animation: popIn 0.45s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  #namePrompt h2 {
+    font-size: 1.6rem;
+    color: #c74b8a;
+    margin-bottom: 1.2rem;
+  }
+
+  #nameInput {
+    display: block;
+    width: 100%;
+    padding: 0.65rem 1.2rem;
+    font-size: 1rem;
+    border: 2px solid #e8a0c8;
+    border-radius: 50px;
+    outline: none;
+    text-align: center;
+    color: #5a3a6e;
+    background: #fff8fc;
+    transition: border-color 0.2s;
+    margin-bottom: 1.2rem;
+  }
+
+  #nameInput:focus { border-color: #c94bea; }
+
+  #nameSubmitBtn {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #ff7eb3, #c94bea);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(200, 80, 200, 0.4);
+    transition: filter 0.2s, transform 0.2s;
+  }
+
+  #nameSubmitBtn:hover { filter: brightness(1.1); transform: scale(1.04); }
 </style>
 </head>
 <body>
 
 <div id="bgHearts"></div>
+
+<div id="namePrompt">
+  <div class="modal-box">
+    <h2>💕 Hey you! What's your name?</h2>
+    <input id="nameInput" type="text" placeholder="Type your name…" autocomplete="off">
+    <button id="nameSubmitBtn">Let's go! ✨</button>
+  </div>
+</div>
 
 <button id="bffBtn">💕 Be my forever BFF? 💕</button>
 
@@ -193,9 +257,36 @@
     setTimeout(() => el.remove(), (dur + 3) * 1000);
   }
 
-  // Seed initial hearts, then keep spawning
-  for (let i = 0; i < 12; i++) setTimeout(spawnHeart, i * 400);
-  setInterval(spawnHeart, 900);
+  /* ── Name prompt ── */
+  const LOVE_NAMES = ['mike', 'michael', 'mickey'];
+  let isLoveMode = false;
+
+  const namePrompt     = document.getElementById('namePrompt');
+  const nameInput      = document.getElementById('nameInput');
+  const nameSubmitBtn  = document.getElementById('nameSubmitBtn');
+
+  function submitName() {
+    const name = nameInput.value.trim().toLowerCase();
+    isLoveMode = LOVE_NAMES.includes(name);
+    namePrompt.style.display = 'none';
+
+    if (isLoveMode) {
+      btn.textContent = '💕 Be my forever love? 💕';
+      document.title  = 'Be my forever love 💖';
+    } else {
+      btn.textContent = '💕 Be my forever BFF? 💕';
+      document.title  = 'Be my forever BFF 💖';
+    }
+
+    // Start hearts only after name entry
+    for (let i = 0; i < 12; i++) setTimeout(spawnHeart, i * 400);
+    setInterval(spawnHeart, 900);
+  }
+
+  nameSubmitBtn.addEventListener('click', submitName);
+  nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitName();
+  });
 
 
   /* ── Button dodge logic ── */
@@ -342,6 +433,23 @@
         cancelAnimationFrame(animId);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.style.display = 'none';
+
+        const modalBox = modal.querySelector('.modal-box');
+        if (isLoveMode) {
+          modalBox.innerHTML = `
+            <h2>💖 YAY! You caught me! 💖</h2>
+            <p>Okay fine, you win — LOVE status: OFFICIALLY LOCKED IN. 🎉</p>
+            <p>No take-backs, no returns, no refunds.</p>
+            <p>You're stuck with me forever and I couldn't be happier about it. 😜✨</p>
+            <p><br>Thanks for being the most special human ever. 🌟</p>
+            <button id="closeBtn">Forever &amp; always 💌</button>
+          `;
+        }
+        // Re-attach close listener (needed after innerHTML replacement in love mode)
+        modal.querySelector('#closeBtn').addEventListener('click', () => {
+          modal.classList.remove('visible');
+        });
+
         modal.classList.add('visible');
       }, 1200);
     }, 3000);
